@@ -9,8 +9,8 @@ import updater
 
 
 # +++++ Plex-Plugin-Flickr +++++
-VERSION =  '0.4.0'		
-VDATE = '15.08.2016'
+VERSION =  '0.4.1'		
+VDATE = '16.08.2016'
 
 ''' 
 
@@ -256,7 +256,8 @@ def Gallery_single(path, title):
 		img_src = stringextract('src=\"', '\"', s)
 		width = stringextract('width=\"', '\"', s)
 		height = stringextract('height=\"', '\"', s)
-		summ = 'Größe: ' + width + 'x' + height
+		# summ = 'Größe: ' + width + 'x' + height
+		summ = 'Größe (Breite x Höhe):  %s x %s' % (width, height)
 		title = title.decode(encoding="utf-8", errors="ignore")
 		summ = summ .decode(encoding="utf-8", errors="ignore")
 		Log(title);Log(img_src);Log(summ);
@@ -292,10 +293,14 @@ def Search_Work(query, pagenr):
 	# api_key zu Testzwecken aus https://github.com/ideatosrl/FlickrApi/blob/master/Test/CurlMock.php entnommen
 	# Verwendet wird die freie Textsuche (s. API): Treffer möglich in Titel, Beschreibung + Tags
 	# Mehrere Suchbegriffe, getrennt durch Blanks, bewirken UND-Verknüpfung
+	# URL's: viele Foto-Sets enthalten unterschiedliche Größen - erster Ansatz, Anforderung mit b=groß, schlug häufig fehl.
+	#	Daher Anforderung mit einer Suffix-Liste (extras) - s. https://www.flickr.com/services/api/misc.urls.html -
+	#	und Entnahme der "größten" URL.  
 	
 	query_flickr = query.replace(' ', '%20')		# Leerz. -> url-konform 
 	SEARCHPATH = "https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key=a6d472134d5877b51a38070c7c631956"
-	path =  SEARCHPATH + "&text=%s&page=%s&format=rest" % (query_flickr,pagenr)
+	extras = "url_o,url_k,url_h,url_l,url_c,url_z"		# URL-Anforderung, sortiert von groß nach klein (l = k im URL-API)
+	path =  SEARCHPATH + "&text=%s&page=%s&extras=%s&format=rest" % (query_flickr, pagenr, extras)
 	Log(path) 
 	page = HTML.ElementFromURL(path)
 	s = XML.StringFromElement(page)
@@ -321,7 +326,8 @@ def Search_Work(query, pagenr):
 	Log('Client: ' + client) 
 	
 	list = page.xpath("//photo")
-	# Log(list)
+	extras_list = str.split("url_o,url_k,url_h,url_l,url_c,url_z", ",")	# url_x-Liste mit Größen-Suffixen
+	# Log(extras_list);   # Log(list)		# bei Bedarf
 	image = 1
 	for element in list:					# Voreinstellung 100 pro Seite
 		s = XML.StringFromElement(element)
@@ -330,13 +336,33 @@ def Search_Work(query, pagenr):
 		secret =  stringextract('secret=\"', '\"', s) 
 		serverid =  stringextract('server=\"', '\"', s) 
 		farmid =  stringextract('farm=\"', '\"', s) 		
-		title =  stringextract('title=\"', '\"', s) 
-		# img_src = PHOTO_PATH + '%s/%s' % (owner, pid)		# funktioniert nicht - Service-API verwenden:
-		img_src = 'https://farm%s.staticflickr.com/%s/%s_%s_b.jpg' % (farmid, serverid, pid, secret)  # _{secret}_[mstzb].jpg
-		thumb_src = 'https://farm%s.staticflickr.com/%s/%s_%s_m.jpg' % (farmid, serverid, pid, secret)  
+		title =  stringextract('title=\"', '\"', s)			
 		
-		summ = 'Bild %s von %s' % (str(image), photototal)
+		url_o =  stringextract('url_o=\"', '\"', s) 	# die url_x-Liste muss extras_list entsprechen (s.o.)
+		url_k =  stringextract('url_k=\"', '\"', s) 
+		url_h =  stringextract('url_h=\"', '\"', s) 
+		url_l =  stringextract('url_l=\"', '\"', s) 
+		url_c =  stringextract('url_c=\"', '\"', s) 
+		url_z =  stringextract('url_z=\"', '\"', s) 
+		url_list = [url_o,url_k,url_h,url_l,url_c,url_z]
+		 
+		thumb_src = 'https://farm%s.staticflickr.com/%s/%s_%s_m.jpg' % (farmid, serverid, pid, secret) 
+		# img_src = PHOTO_PATH + '%s/%s' % (owner, pid)		# funktioniert nicht - Service-API verwenden:
+		# img_src = 'https://farm%s.staticflickr.com/%s/%s_%s_b.jpg' % (farmid, serverid, pid, secret)  # _{secret}_[mstzb].jpg
+		for i in range (len(url_list)):			# wir nehmen die erste gefundene URL (größtes Format)
+			if len(url_list[i]) > 0:
+				img_src = url_list[i]
+				url_extra = extras_list[i]		# zusätzlich height + width ermitteln
+				url_extra =url_extra[-2:] 		# z.B. _o von url_o
+				height = stringextract('height%s=\"' % (url_extra), '\"', s)  # z.B. height_o
+				width = stringextract('width%s=\"' % (url_extra), '\"', s)	  # z.B. width_o
+				break
+		
+		# summ = 'Bild %s von %s' % (str(image), photototal)	macht PhotoObject selbst
+		summ = 'Größe (Breite x Höhe):  %s x %s' % (width, height)
+		title = unescape(title)
 		title = title.decode(encoding="utf-8", errors="ignore")
+		summ = summ.decode(encoding="utf-8", errors="ignore")
 		Log(img_src);Log(title); # Log(pid);Log(owner);	# bei Bedarf
 		
 		oc.add(PhotoObject(
@@ -433,7 +459,7 @@ def repl_char(cut_char, line):	# problematische Zeichen in Text entfernen, wenn 
 #----------------------------------------------------------------  	
 def unescape(line):	# HTML-Escapezeichen in Text entfernen, bei Bedarf erweitern. ARD auch &#039; statt richtig &#39;
 	line_ret = (line.replace("&amp;", "&").replace("&lt;", "<").replace("&gt;", ">")
-		.replace("&#39;", "'").replace("&#039;", "'").replace("&quot;", '"'))
+		.replace("&#39;", "'").replace("&#039;", "'").replace("&quot;", '"').replace("&nbsp;", " "))
 	# Log(line_ret)		# bei Bedarf
 	return line_ret	
 #----------------------------------------------------------------  	

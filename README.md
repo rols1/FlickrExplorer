@@ -1,5 +1,5 @@
-﻿Plex-Plugin-Flickr.
-===================
+﻿Plex-Plugin-Flickr
+==================
 
 Download aktuelle Version: https://github.com/rols1/Plex-Plugin-Flickr/releases
 

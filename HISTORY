@@ -3,6 +3,7 @@ CHANGE HISTORY 	Plex-Plugin-Flickr
 --------------				
 
 			
+16.08.2016	0.4.1	Search_Work: Anforderung mehrerer Quell-URL's + Ermittlung des größten verfügbaren Fotos	
 15.08.2016	0.4.0	Initial Release Github	
 14.08.2016	0.4.0	verwirklicht: Blättern vor- und rückwärts	
 06.08.2016	0.3.0	verwirklicht: Suche
