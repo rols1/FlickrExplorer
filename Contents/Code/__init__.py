@@ -9,8 +9,8 @@ import updater
 
 
 # +++++ Plex-Plugin-Flickr +++++
-VERSION =  '0.4.1'		
-VDATE = '16.08.2016'
+VERSION =  '0.4.2'		
+VDATE = '17.08.2016'
 
 ''' 
 
@@ -65,6 +65,7 @@ ICON_GALLERY = "icon-gallery.png"
 
 ICON_MAIN_UPDATER	= 'plugin-update.png'		
 ICON_UPDATER_NEW 	= 'plugin-update-new.png'
+ICON_PREFS = 'plugin-preferences.png'
 
 REPO_NAME = 'Plex-Plugin-Flickr'
 GITHUB_REPOSITORY = 'rols1/' + REPO_NAME
@@ -108,7 +109,12 @@ def Main():
 	oc.add(DirectoryObject(key=Callback(SearchUpdate, title='Plugin-Update'), 
 		title='Plugin-Update | akt. Version: ' + VERSION + ' vom ' + VDATE,
 		summary='Suche nach neuen Updates starten', tagline='Bezugsquelle: ' + repo_url, thumb=R(ICON_MAIN_UPDATER)))
+		
+	oc.add(DirectoryObject(key = Callback(Main_Options, title='Einstellungen'), title = 'Einstellungen', 
+		summary = 'Fotosuche: maximale Bildbreite', 
+		thumb = R(ICON_PREFS)))
 	return oc
+	
 #----------------------------------------------------------------
 def home(cont):									# Home-Button, Aufruf: oc = home(cont=oc)			
 	#title = 'Zurück zum Hauptmenü'.decode(encoding="utf-8", errors="ignore")
@@ -163,6 +169,129 @@ def SearchUpdate(title):		#
 			thumb = R(ICON_OK)))
 			
 	return oc
+	
+####################################################################################################
+@route(PREFIX + '/Main_Options')
+# DumbTools (https://github.com/coder-alpha/DumbTools-for-Plex) getestet, aber nicht verwendet - wiederholte 
+#	Aussetzer bei Aufrufen nach längeren Pausen (mit + ohne secure-Funktion)
+
+def Main_Options(title):
+	Log('Funktion Main_Options')	
+	Log(Prefs['pref_max_width']); 
+	
+	# hier zeigt Plex die Einstellungen (Entwicklervorgabe in DefaultPrefs.json):
+	# 	http://127.0.0.1:32400/:/plugins/com.plexapp.plugins.flickr/prefs
+	#	geänderte Daten legt Plex persistent ab (nicht in DefaultPrefs.json) - Löschen nur 
+	#	möglich mit Löschen des Caches (Entfernen ../Caches/com.plexapp.plugins.flickr)
+	myplugin = Plugin.Identifier
+	data = HTTP.Request("%s/:/plugins/%s/prefs" % (myhost, myplugin), # als Text, nicht als HTML-Element
+						immediate=True).content 
+	
+	# Zeilenaufbau
+	#	1. Zeile "<?xml version='1.0' encoding='utf-8'?>"
+	#	2. Zeile (..identifier="com.plexapp.plugins.ardmediathek2016"..) 
+	#   ab 3.Zeile Daten
+	# Log(data)
+	myprefs = data.splitlines() 
+	Log(myprefs)
+	myprefs = myprefs[2:-1]		# letzte Zeile + Zeilen 1-2 entfernen 
+		
+	oc = ObjectContainer(no_cache=True, view_group="InfoList", title1='Einstellungen')
+	oc = home(cont=oc)				# Home-Button - in den Untermenüs Rücksprung hierher zu Einstellungen 
+	for i in range (len(myprefs)):
+		do = DirectoryObject()
+		element = myprefs[i]		# Muster: <Setting secure="false" default="true" value="true" label=...
+		Log(element)
+		secure = stringextract('secure=\"', '\"', element)		# nicht verwendet
+		default = stringextract('default=\"', '\"', element)	# Vorgabe
+		id = stringextract('id=\"', '\"', element)
+		value = stringextract('value=\"', '\"', element)		# akt. Wert (hier nach dem Setzen nicht mehr aktuell)
+		pref_value = Prefs[id]									# akt. Wert via Prefs - OK
+		label = stringextract('label=\"', '\"', element)
+		values = stringextract('values=\"', '\"', element)
+		mytype = stringextract('type=\"', '\"', element)
+		Log(secure);Log(default);Log(label);Log(values);Log(mytype); Log(id);
+		Log(pref_value);
+		if mytype == 'bool':										# lesbare Anzeige (statt bool, true, false)
+			#oc_type = '| JA / NEIN | aktuell: '
+			if str(pref_value).lower() == 'true':
+				oc_wert = 'JA'
+				oc_type = '| für NEIN  klicken | aktuell: '
+			else:
+				oc_wert = 'NEIN'
+				oc_type = '| für JA  klicken | aktuell: '
+		if mytype == 'enum':
+			#oc_type = '|  Aufzählung | aktuell: '
+			oc_type = '|  für Liste klicken | aktuell: '
+			oc_wert = pref_value
+		if mytype == 'text':
+			oc_type = '| Texteingabe | aktuell: '
+			oc_wert = pref_value
+		title = u'%s  %s  %s' % (label, oc_type, oc_wert)
+		title = title.decode(encoding="utf-8", errors="ignore")
+		Log(title); Log(mytype)
+
+		if mytype == 'bool':
+			Log('mytype == bool')	
+			do.key = Callback(Set, key=id, value=not Prefs[id], oc_wert=not Prefs[id]) 	# Wert direkt setzen (groß/klein egal)		
+		if mytype == 'enum':
+			do.key = Callback(ListEnum, id=id, label=label, values=values)			# Werte auflisten
+		elif mytype == 'text':														# Eingabefeld für neuen Wert (Player-abhängig)
+			oc = home(cont=oc)							# Home-Button	
+			oc.add(InputDirectoryObject(key=Callback(SetText, id=id), title=title), title=title)
+			continue
+			
+		do.title = title
+		oc.add(do)			
+		
+	return oc
+#------------
+@route(PREFIX + '/ListEnum')
+def ListEnum(id, label, values):
+	Log(ListEnum); Log(id); 
+	label = label.decode(encoding="utf-8", errors="ignore")
+	oc = ObjectContainer(no_cache=True, view_group="InfoList", title1=label)	
+	title = 'zurück zu den Einstellungen'.decode(encoding="utf-8", errors="ignore")		# statt Home-Button	
+	oc.add(DirectoryObject(key = Callback(Main_Options, title=title), title = title, 
+		summary = title, 
+		thumb = R(ICON_PREFS)))
+	values = values.split('|') 
+	Log(values);
+	for i in range(len(values)):
+		pref = values[i]
+		oc_wert = pref
+		Log('value: ' + str(i) + ' Wert: ' + oc_wert)
+		oc.add(DirectoryObject(key=Callback(Set, key=id, value=i, oc_wert=oc_wert), title = u'%s' % (pref)))				
+	return oc
+#------------
+@route(PREFIX + '/SetText')
+def SetText(query, id):
+	return Set(key=id, value=query, oc_wert=oc_wert)
+#------------
+@route(PREFIX + '/Set')
+def Set(key, value, oc_wert):
+	Log('Set: key, value ' + key + ', ' + value); 
+	#oc_wert = value
+	if str(value).lower() == 'true':
+		oc_wert = 'JA'
+	if str(value).lower() == 'false':
+		oc_wert = 'NEIN'
+
+	oc = ObjectContainer(no_cache=True, view_group="InfoList", title1='eingestellt auf: ' + oc_wert)	
+	title = 'zurück zu den Einstellungen'.decode(encoding="utf-8", errors="ignore")		# statt Home-Button	
+	oc.add(DirectoryObject(key = Callback(Main_Options, title=title), title = title, 
+		summary = title, 
+		thumb = R(ICON_PREFS)))
+	
+	# Bsp.: http://127.0.0.1:32400/:/plugins/com.plexapp.plugins.flickr/prefs/set?pref_max_width=1600
+	HTTP.Request("%s/:/plugins/%s/prefs/set?%s=%s" % (myhost, Plugin.Identifier, key, value), immediate=True)
+	#return ObjectContainer()
+	return oc
+#--------------------------------
+def ValidatePrefs():
+	Log('ValidatePrefs')
+	#Dict.Save()	# n.b. - Plex speichert in Funktion Set, benötigt trotzdem Funktion ValidatePrefs im Plugin
+	return
 	
 ####################################################################################################
 @route(PREFIX + '/Galleries_all')
@@ -257,7 +386,7 @@ def Gallery_single(path, title):
 		width = stringextract('width=\"', '\"', s)
 		height = stringextract('height=\"', '\"', s)
 		# summ = 'Größe: ' + width + 'x' + height
-		summ = 'Größe (Breite x Höhe):  %s x %s' % (width, height)
+		summ = 'Bildgröße (Breite x Höhe):  %s x %s' % (width, height)
 		title = title.decode(encoding="utf-8", errors="ignore")
 		summ = summ .decode(encoding="utf-8", errors="ignore")
 		Log(title);Log(img_src);Log(summ);
@@ -285,6 +414,7 @@ def Search(query=None, title=L('Search'), s_type='video', pagenr=1, **kwargs):
 	ObjectContainer = Search_Work(query=query, pagenr=pagenr)	# wir springen direkt - Search_Work prozessiert vor + zurück 
 	return	ObjectContainer
 	
+# --------------------------	
 @route(PREFIX + '/Search_Work')	
 def Search_Work(query, pagenr):
 	Log('Search_Work: ' + query); 
@@ -299,7 +429,25 @@ def Search_Work(query, pagenr):
 	
 	query_flickr = query.replace(' ', '%20')		# Leerz. -> url-konform 
 	SEARCHPATH = "https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key=a6d472134d5877b51a38070c7c631956"
-	extras = "url_o,url_k,url_h,url_l,url_c,url_z"		# URL-Anforderung, sortiert von groß nach klein (l = k im URL-API)
+	extras = "url_o,url_k,url_h,url_l,url_c,url_z"	# URL-Anforderung, sortiert von groß nach klein - Default
+	# Breiten: o = Original, k=2048, h=1600, l=1024, c=800, z=640
+	pref_max_width = Prefs['pref_max_width']
+	# pref_max_width = 1600		# Test
+	if pref_max_width == "Originalbild":
+		extras = "url_o,url_k,url_h,url_l,url_c,url_z"
+	if pref_max_width == "2048":
+		extras = "url_k,url_h,url_l,url_c,url_z"
+	if pref_max_width == "1600":
+		extras = "url_h,url_l,url_c,url_z"
+	if pref_max_width == "1024":
+		extras = "url_l,url_c,url_z"	
+	if pref_max_width == "800":
+		extras = "url_c,url_z"
+	if pref_max_width == "640":
+		extras = "url_z"
+	Log(pref_max_width); Log(extras)
+	extras_list = extras.split(",")						# Verarbeitung s.u.
+	
 	path =  SEARCHPATH + "&text=%s&page=%s&extras=%s&format=rest" % (query_flickr, pagenr, extras)
 	Log(path) 
 	page = HTML.ElementFromURL(path)
@@ -324,10 +472,9 @@ def Search_Work(query, pagenr):
 	if client.find ('Plex Home Theater'): 
 		oc = home(cont=oc)							# Home-Button macht bei PHT das PhotoObject unbrauchbar
 	Log('Client: ' + client) 
-	
+			
 	list = page.xpath("//photo")
-	extras_list = str.split("url_o,url_k,url_h,url_l,url_c,url_z", ",")	# url_x-Liste mit Größen-Suffixen
-	# Log(extras_list);   # Log(list)		# bei Bedarf
+	Log(extras_list);   # Log(list)		# bei Bedarf
 	image = 1
 	for element in list:					# Voreinstellung 100 pro Seite
 		s = XML.StringFromElement(element)
@@ -337,33 +484,30 @@ def Search_Work(query, pagenr):
 		serverid =  stringextract('server=\"', '\"', s) 
 		farmid =  stringextract('farm=\"', '\"', s) 		
 		title =  stringextract('title=\"', '\"', s)			
-		
-		url_o =  stringextract('url_o=\"', '\"', s) 	# die url_x-Liste muss extras_list entsprechen (s.o.)
-		url_k =  stringextract('url_k=\"', '\"', s) 
-		url_h =  stringextract('url_h=\"', '\"', s) 
-		url_l =  stringextract('url_l=\"', '\"', s) 
-		url_c =  stringextract('url_c=\"', '\"', s) 
-		url_z =  stringextract('url_z=\"', '\"', s) 
-		url_list = [url_o,url_k,url_h,url_l,url_c,url_z]
-		 
+				 
 		thumb_src = 'https://farm%s.staticflickr.com/%s/%s_%s_m.jpg' % (farmid, serverid, pid, secret) 
 		# img_src = PHOTO_PATH + '%s/%s' % (owner, pid)		# funktioniert nicht - Service-API verwenden:
 		# img_src = 'https://farm%s.staticflickr.com/%s/%s_%s_b.jpg' % (farmid, serverid, pid, secret)  # _{secret}_[mstzb].jpg
-		for i in range (len(url_list)):			# wir nehmen die erste gefundene URL (größtes Format)
-			if len(url_list[i]) > 0:
-				img_src = url_list[i]
-				url_extra = extras_list[i]		# zusätzlich height + width ermitteln
-				url_extra =url_extra[-2:] 		# z.B. _o von url_o
-				height = stringextract('height%s=\"' % (url_extra), '\"', s)  # z.B. height_o
-				width = stringextract('width%s=\"' % (url_extra), '\"', s)	  # z.B. width_o
+
+		# Foto-Auswahl - jeweils das größte, je nach Voreinstellung (falls verfügbar):
+		for i in range (len(extras_list)):			
+			url_extra = extras_list[i]
+			img_src = stringextract('%s=\"' % (url_extra), '\"', s) 
+			suffix = url_extra[-2:] 		# z.B. _o von url_o, zusätzlich height + width ermitteln
+			width = stringextract('width%s=\"' % (suffix), '\"', s)	  	# z.B. width_o
+			height = stringextract('height%s=\"' % (suffix), '\"', s)  	# z.B. height_o
+			# Log(url_extra); Log(img_src);Log(suffix);Log(width);Log(height);	# bei Bedarf
+			if len(img_src) > 0:		# falls Format nicht vorhanden, weiter mit den kleineren Formaten
 				break
 		
 		# summ = 'Bild %s von %s' % (str(image), photototal)	macht PhotoObject selbst
-		summ = 'Größe (Breite x Höhe):  %s x %s' % (width, height)
+		summ = 'Bildgröße (Breite x Höhe):  %s x %s' % (width, height)
 		title = unescape(title)
 		title = title.decode(encoding="utf-8", errors="ignore")
 		summ = summ.decode(encoding="utf-8", errors="ignore")
 		Log(img_src);Log(title); # Log(pid);Log(owner);	# bei Bedarf
+		if img_src == '':	# Sicherung (PhotoObject braucht URL)
+			continue
 		
 		oc.add(PhotoObject(
 			key=img_src,
@@ -377,7 +521,7 @@ def Search_Work(query, pagenr):
 	# auf mehr prüfen:
 	Log(pagenr); Log(pagemax); Log(photototal);
 	page_next = int(pagenr) + 1
-	if (int(pagenr)+1) < int(pagemax):
+	if (int(pagenr)+1) <= int(pagemax):
 		Log(int(pagenr) +1)
 		oc.add(DirectoryObject(key=Callback(Search_Work, query=query, pagenr=int(pagenr) +1), 
 			title=name, summary='Mehr (+ 1)', tagline='', thumb=R(ICON_MEHR_1)))

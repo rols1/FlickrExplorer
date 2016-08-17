@@ -12,7 +12,8 @@ FEED_URL = 'https://github.com/{0}/releases.atom'
 
 ################################################################################
 TITLE = "Plex Plugin für die deutsche ARD Mediathek - mit Live-TV der ARD + weiteren Sendern"
-GITHUB_REPOSITORY = 'Plex-Plugin-Flickr'
+REPO_NAME = 'Plex-Plugin-Flickr'
+GITHUB_REPOSITORY = 'rols1/' + REPO_NAME
 PREFIX = "/video/flickr"
 ################################################################################
 

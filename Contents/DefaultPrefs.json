@@ -1,15 +1,16 @@
 [
-    {
-        "id": "username",
-        "type": "text",
-        "label": "Login Email",
-        "default": ""
-    },
-    {
-        "id": "password",
-        "type": "text",
-        "label": "Password",
-        "default": "",
-        "option": "hidden"
-    }
+	{
+		"id": 		"pref_max_width",
+		"label": 	"Fotosuche: maximale Bildbreite",
+		"type": 	"enum",
+		"values":	[ "1600"
+					, "Originalbild"
+					, "2048"
+					, "1600"
+					, "1024"
+					, "800"
+					, "640"
+					],
+		"default": 	  "1600"
+	},    
 ]
