@@ -2,6 +2,8 @@ CHANGE HISTORY 	Plex-Plugin-Flickr
 --------------	Releases: 	https://github.com/rols1/Plex-Plugin-Flickr/releases
 --------------				
 
+20.08.2016	0.4.3	Korrektur: Menü-Fehler im Suche-Button beseitigt (Aufruf Main() erfolgte
+			mit 1 Parameter zuviel)
 17.08.2016	0.4.2	Korrektur: Fehler bei Seitensteuerung beseitigt
 			Erweiterung: Einstellungen (Fotosuche: maximale Bildbreite)			
 16.08.2016	0.4.1	Search_Work: Anforderung mehrerer Quell-URL's + Ermittlung des größten verfügbaren Fotos	

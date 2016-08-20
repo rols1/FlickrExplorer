@@ -9,8 +9,8 @@ import updater
 
 
 # +++++ Plex-Plugin-Flickr +++++
-VERSION =  '0.4.2'		
-VDATE = '17.08.2016'
+VERSION =  '0.4.3'		
+VDATE = '20.08.2016'
 
 ''' 
 
@@ -97,7 +97,7 @@ def Main():
 						
 	name = "Flickr"													
 	# folgendes DirectoryObject ist Deko für das nicht sichtbare InputDirectoryObject dahinter:
-	oc.add(DirectoryObject(key=Callback(Main, name=name),title='Suche: im Suchfeld eingeben', 
+	oc.add(DirectoryObject(key=Callback(Main),title='Suche: im Suchfeld eingeben', 
 		summary='', tagline='Fotos', thumb=R(ICON_SEARCH)))
 	oc.add(InputDirectoryObject(key=Callback(Search, s_type='picture', title=u'%s' % L('Search Picture')),
 		title=u'%s' % L('Suche'), prompt=u'%s' % L('Search Picture'), thumb=R(ICON_SEARCH)))
