@@ -3,7 +3,7 @@
 
 Download aktuelle Version: https://github.com/rols1/Plex-Plugin-Flickr/releases
 
-#### Rückmeldungen im Plex-Forum willkommen
+#### Rückmeldungen im Plex-Forum willkommen: https://forums.plex.tv/discussion/228703/plex-plugin-flickr
 direkt: rols1@gmx.de 
   
 #### Funktionen (getestet in Chrome und OpenPHT)
@@ -11,7 +11,7 @@ direkt: rols1@gmx.de
 - Suche nach Fotos 
 gesucht wird in Titel, Beschreibung und Tags
 mehrere Suchbegriffe werden als UND-Verknüpfung verwendet
-Blättern vor- und rückwärts
+Blättern vor- und rückwärts in den Ergebnislisten
 
 - Galerien
 Blättern vor- und rückwärts
@@ -37,4 +37,16 @@ UPDATES:
 ===================  
 Für Updates kann das integrierte Update-Modul verwendet werden.
  
-   
+ Hauptmenü:
+===================  
+![img](https://us.v-cdn.net/6025034/uploads/editor/ze/v4qsv6ecba97.png)
+
+Beispiel für Suche:
+===================  
+![img](https://us.v-cdn.net/6025034/uploads/editor/aj/7y5ppwzkq235.png)  
+![img](https://us.v-cdn.net/6025034/uploads/editor/ms/3wyi46cmporw.png)
+
+maximale Bildbreite für die Fotosuche einstellen:
+===================  
+![img](https://us.v-cdn.net/6025034/uploads/editor/ho/0wlcu3ligzvg.png)
+
