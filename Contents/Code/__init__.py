@@ -9,8 +9,8 @@ import updater
 
 
 # +++++ Plex-Plugin-Flickr +++++
-VERSION =  '0.4.3'		
-VDATE = '20.08.2016'
+VERSION =  '0.4.4'		
+VDATE = '30.06.2017'
 
 ''' 
 
@@ -38,19 +38,19 @@ VDATE = '20.08.2016'
 
 ####################################################################################################
 
-NAME = 'Plex-Plugin-Flickr'
-PREFIX = '/video/flickr'			
+NAME 				= 'Plex-Plugin-Flickr'
+PREFIX				= '/video/flickr'			
 												
 
-ART = 'art-flickr.png'					# Hintergrund			
-ICON_FLICKR = 'icon-flickr.png'						
-ICON_SEARCH = 'icon-search.png'						
+ART 				= 'art-flickr.png'		# Hintergrund			
+ICON_FLICKR 		= 'icon-flickr.png'						
+ICON_SEARCH 		= 'icon-search.png'						
 
 
-ICON_OK = "icon-ok.png"
-ICON_WARNING = "icon-warning.png"
-ICON_NEXT = "icon-next.png"
-ICON_CANCEL = "icon-error.png"
+ICON_OK 			= "icon-ok.png"
+ICON_WARNING 		= "icon-warning.png"
+ICON_NEXT 			= "icon-next.png"
+ICON_CANCEL 		= "icon-error.png"
 ICON_MEHR 			= "icon-mehr.png"
 ICON_MEHR_1 		= "icon-mehr_1.png"
 ICON_MEHR_10 		= "icon-mehr_10.png"
@@ -59,21 +59,21 @@ ICON_WENIGER_1		= "icon-weniger_1.png"
 ICON_WENIGER_10  	= "icon-weniger_10.png"
 ICON_WENIGER_100 	= "icon-weniger_100.png"
 
-ICON_WORK = "icon-work.png"
+ICON_WORK 			= "icon-work.png"
 
-ICON_GALLERY = "icon-gallery.png"
+ICON_GALLERY 		= "icon-gallery.png"
 
 ICON_MAIN_UPDATER	= 'plugin-update.png'		
 ICON_UPDATER_NEW 	= 'plugin-update-new.png'
 ICON_PREFS = 'plugin-preferences.png'
 
-REPO_NAME = 'Plex-Plugin-Flickr'
-GITHUB_REPOSITORY = 'rols1/' + REPO_NAME
-myhost = 'http://127.0.0.1:32400'
+REPO_NAME 			= 'Plex-Plugin-Flickr'
+GITHUB_REPOSITORY 	= 'rols1/' + REPO_NAME
+myhost 				= 'http://127.0.0.1:32400'
 
-BASE = "https://www.flickr.com"
-GALLERY_PATH = "https://www.flickr.com/photos/flickr/galleries/"
-PHOTO_PATH = "https://www.flickr.com/photos/"
+BASE 				= "https://www.flickr.com"
+GALLERY_PATH 		= "https://www.flickr.com/photos/flickr/galleries/"
+PHOTO_PATH 			= "https://www.flickr.com/photos/"
 
 
 def Start():
@@ -106,9 +106,26 @@ def Main():
 		summary='', tagline='Galerien', thumb=R(ICON_GALLERY)))
 
 	repo_url = 'https://github.com/{0}/releases/'.format(GITHUB_REPOSITORY)
-	oc.add(DirectoryObject(key=Callback(SearchUpdate, title='Plugin-Update'), 
-		title='Plugin-Update | akt. Version: ' + VERSION + ' vom ' + VDATE,
-		summary='Suche nach neuen Updates starten', tagline='Bezugsquelle: ' + repo_url, thumb=R(ICON_MAIN_UPDATER)))
+	call_update = False
+	if Prefs['pref_info_update'] == True:				# Hinweis auf neues Update beim Start des Plugins 
+		ret = updater.update_available(VERSION)
+		int_lv = ret[0]			# Version Github
+		int_lc = ret[1]			# Version aktuell
+		latest_version = ret[2]	# Version Github, Format 1.4.1
+		
+		if int_lv > int_lc:								# Update-Button "installieren" zeigen
+			call_update = True
+			title = 'neues Update vorhanden - jetzt installieren'
+			summary = 'Plugin aktuell: ' + VERSION + ', neu auf Github: ' + latest_version
+			url = 'https://github.com/{0}/releases/download/{1}/{2}.bundle.zip'.format(GITHUB_REPOSITORY, latest_version, REPO_NAME)
+			oc.add(DirectoryObject(key=Callback(updater.update, url=url , ver=latest_version), 
+				title=title, summary=summary, tagline=cleanhtml(summary), thumb=R(ICON_UPDATER_NEW)))
+	if call_update == False:							# Update-Button "Suche" zeigen	
+		title = 'Plugin-Update | akt. Version: ' + VERSION + ' vom ' + VDATE	
+		summary='Suche nach neuen Updates starten'
+		tagline='Bezugsquelle: ' + repo_url			
+		oc.add(DirectoryObject(key=Callback(SearchUpdate, title='Plugin-Update'), 
+			title=title, summary=summary, tagline=tagline, thumb=R(ICON_MAIN_UPDATER)))
 		
 	oc.add(DirectoryObject(key = Callback(Main_Options, title='Einstellungen'), title = 'Einstellungen', 
 		summary = 'Fotosuche: maximale Bildbreite', 
@@ -372,16 +389,19 @@ def Gallery_single(path, title):
 	Log(page); 
 	
 	# list = page.xpath("//*[@class='photo_container pc_s']")		# Thumbnails
-	list = page.xpath("//*[@class='photo_container pc_z']")		# Org.-Größe
+	list = page.xpath("//*[@class='photo_container pc_z']")			# Org.-Größe
 	Log(page); Log(list)
 	
 	image = 1
 	for element in list:	
 		s = HTML.StringFromElement(element)
-		id =  stringextract('data-photo-id=\"', '\">', s)
-		flickr_gallary__href = BASE + stringextract('href=\"', '\"', s)   # -> Galerie auf Flickr
+		phid =  stringextract('data-photo-id=\"', '\">', s)				 # ID z.Z. nicht benötigt			 
+		flickr_gallary__href = BASE + stringextract('href=\"', '\"', s)   # -> Web-Galerie auf Flickr
 		title =  stringextract('title=\"', '\"', s)
-		# img_prev_src = stringextract('img src=\"', '\"', s)  # nur bei Thumbnails
+		
+		# Thumbnails unnötig - von Plex je nach Player selbst erzeugt. Besser vom Original herunter skaliert
+		#	als vom ev zu kleinen Thumb hoch skaliert und verzerrt
+		# img_prev_src = stringextract('img src=\"', '\"', s)  
 		img_src = stringextract('src=\"', '\"', s)
 		width = stringextract('width=\"', '\"', s)
 		height = stringextract('height=\"', '\"', s)
@@ -389,21 +409,19 @@ def Gallery_single(path, title):
 		summ = 'Bildgröße (Breite x Höhe):  %s x %s' % (width, height)
 		title = title.decode(encoding="utf-8", errors="ignore")
 		summ = summ .decode(encoding="utf-8", errors="ignore")
-		Log(title);Log(img_src);Log(summ);
-		oc.add(PhotoObject(
-			# key=img_prev_src,
-			key=img_src,
+		Log(title);Log(img_src);Log(summ); 	
+
+		oc.add(PhotoObject(	
+			key=img_src,		# bei Verwendung von url: No service found for URL..
 			rating_key='%s.%s' % (Plugin.Identifier, 'Bild ' + str(image)),	# rating_key = eindeutige ID
 			summary=summ,
 			title=title,
-			thumb = img_src
-			#thumb = flickr_gallary__href
+			thumb =	img_src,
 			))
 		image += 1
 	
 	return oc
-	
-	
+		
 ####################################################################################################
 # API-Format (unsigniert):	https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key=
 #	24df437b03dd7bf070ba220aa717027e&text=eltville&page=3&format=rest
@@ -587,6 +605,7 @@ def transl_umlaute(line):	# Umlaute übersetzen, wenn decode nicht funktioniert
 	line_ret = line_ret.replace("Ü", "Ue", len(line_ret))
 	line_ret = line_ret.replace('ü', 'ue', len(line_ret))
 	line_ret = line_ret.replace("Ö", "Oe", len(line_ret))
+	line_ret = line_ret.replace("ö", "oe", len(line_ret))
 	line_ret = line_ret.replace("ß", "ss", len(line_ret))	
 	return line_ret
 #----------------------------------------------------------------  
@@ -602,9 +621,27 @@ def repl_char(cut_char, line):	# problematische Zeichen in Text entfernen, wenn 
 	return line_ret
 #----------------------------------------------------------------  	
 def unescape(line):	# HTML-Escapezeichen in Text entfernen, bei Bedarf erweitern. ARD auch &#039; statt richtig &#39;
-	line_ret = (line.replace("&amp;", "&").replace("&lt;", "<").replace("&gt;", ">")
-		.replace("&#39;", "'").replace("&#039;", "'").replace("&quot;", '"').replace("&nbsp;", " "))
-	# Log(line_ret)		# bei Bedarf
+#	line_ret = (line.replace("&amp;", "&").replace("&lt;", "<").replace("&gt;", ">")
+#		.replace("&#39;", "'").replace("&#039;", "'").replace("&quot;", '"').replace("&nbsp;", " "))
+	line_ret = line.replace('&auml;',"ä") 
+	line_ret = line.replace('&ouml;',"ö") 
+	line_ret = line.replace('&uuml;',"ü") 
+	line_ret = line.replace('&szlig;',"ß")
+	line_ret = line.replace('&Auml;',"Ä")  
+	line_ret = line.replace('&Ouml;',"Ö")  
+	line_ret = line.replace('&Uuml;',"Ü")  
+	line_ret = line.replace('&#034;','"') 	#
+	line_ret = line.replace('&quot;','"')  	# Entity Name zu &#034;
+	line_ret = line.replace('\u00E9','é')
+	line_ret = line.replace('&#039;',"'")  	# Bsp. ARD statt &#39; 
+	line_ret = line.replace('&#39;',"'")  	#
+	line_ret = line.replace('&#038;','&') 	#
+	line_ret = line.replace('&amp;','&') 	# Entity Name zu &#038;
+	line_ret = line.replace('&nbsp;',' ')
+	line_ret = line.replace('&gt;','>')
+	line_ret = line.replace('&lt;','<')	
+
+	Log(line_ret)		# bei Bedarf
 	return line_ret	
 #----------------------------------------------------------------  	
 def mystrip(line):	# Ersatz für unzuverlässige strip-Funktion
@@ -613,5 +650,11 @@ def mystrip(line):	# Ersatz für unzuverlässige strip-Funktion
 	line_ret = line_ret.strip()	
 	# Log(line_ret)		# bei Bedarf
 	return line_ret
+#----------------------------------------------------------------  	
+def cleanhtml(line): # ersetzt alle HTML-Tags zwischen < und >  mit 1 Leerzeichen
+	cleantext = line
+	cleanre = re.compile('<.*?>')
+	cleantext = re.sub(cleanre, ' ', line)
+	return cleantext
 #----------------------------------------------------------------  	
 

@@ -1,5 +1,11 @@
 [
 	{
+		"id": "pref_info_update",
+		"label": "neues Update beim Start des Plugins anzeigen",
+		"type": "bool",
+		"default": "true"
+    	},    
+	{
 		"id": 		"pref_max_width",
 		"label": 	"Fotosuche: maximale Bildbreite",
 		"type": 	"enum",
