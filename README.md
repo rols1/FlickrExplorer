@@ -16,7 +16,7 @@ mehrere Suchbegriffe werden als UND-Verknüpfung verwendet
 - Galerien (Blättern vor- und rückwärts)
 - Updatemodul
 
-
+#### This product uses the Flickr API but is not endorsed or certified by Flickr.
 
 
 INSTALLATION:
