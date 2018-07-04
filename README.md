@@ -8,12 +8,12 @@ direkt: rols1@gmx.de
   
 #### Funktionen (getestet in Chrome und OpenPHT)
 
-- Suche nach Fotos 
-gesucht wird in Titel, Beschreibung und Tags
-mehrere Suchbegriffe werden als UND-Verknüpfung verwendet
-(Blättern vor- und rückwärts in den Ergebnislisten)
-
-- Galerien (Blättern vor- und rückwärts)
+- Suche nach beliebigen Fotos (Hauptmenü)
+- Blättern in öffentlichen Flickr Fotos (Photostream)
+- Blättern in öffentlichen Flickr Gallerien (Web Gallerien)
+- Suche nach anderen Flickr Nutzern und Blättern in dessen öffentlichen Beständen (Photostream, Gallerien, Alben, Favoriten)
+- MyFlickr: Suche und Blättern im eigenen öffentlichen Bestand (Photostream, Gallerien, Alben, Favoriten)
+- Sprachen: Deutsch / Englisch
 - Updatemodul
 
 #### This product uses the Flickr API but is not endorsed or certified by Flickr.
@@ -37,14 +37,19 @@ Für Updates kann das integrierte Update-Modul verwendet werden.
  
  Hauptmenü:
 ===================  
-![img](https://us.v-cdn.net/6025034/uploads/editor/ze/v4qsv6ecba97.png)
+![img](https://discourse-cdn-sjc1.com/plex/uploads/default/original/3X/7/0/701551f9e411b99e20e743c017060564c55415e1.png)
 
-Beispiel für Suche:
+FlickrPeople Menü (Suchbegriff DaVinci):
 ===================  
-![img](https://us.v-cdn.net/6025034/uploads/editor/aj/7y5ppwzkq235.png)  
-![img](https://us.v-cdn.net/6025034/uploads/editor/ms/3wyi46cmporw.png)
+![img](https://discourse-cdn-sjc1.com/plex/uploads/default/optimized/3X/9/5/95f8d88e5df1d201b3caa8e71d520f7c4f42f384_1_690x160.png)  
 
-maximale Bildbreite für die Fotosuche einstellen:
+FlickrPeople Menü (ausgewählt: flicoholic):
 ===================  
-![img](https://us.v-cdn.net/6025034/uploads/editor/ho/0wlcu3ligzvg.png)
+![img](https://discourse-cdn-sjc1.com/plex/uploads/default/optimized/3X/2/3/239fd1256b08408e22719ff9f8df32607c6eaefd_1_690x171.png)
+
+Einstellungen
+===================  
+![img](https://discourse-cdn-sjc1.com/plex/uploads/default/optimized/3X/d/0/d022d688343b124904422828b85c29fdd9e1122a_1_544x500.png)
+
+
 

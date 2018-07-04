@@ -3,6 +3,10 @@ CHANGE HISTORY 	Plex-Plugin-Flickr
 --------------				
 
 
+04.07.2018	0.5.7	Integration WebPeopleSingle in MyMenu - Anpassung home. WebPeopleSingle entfernt 
+			(nicht mehr benötigt).
+			Route home ergänzt.
+			MyGalleries: Ermittlung gallery_id angepasst an unterschiedliche Url-Endungen.
 01.07.2018	0.5.6	Für PHT: Auslagerung der Funktion zur Anzeige der Fotos (ShowPhotoObject) - wegen PHT 
 			ohne Buttons (Home, Mehr..).
 			Funktion home angepasst: Rücksprung zum Untermenü von FlickrPeople für gewählte Nutzer.
@@ -25,7 +29,7 @@ not on github	0.4.7	Flickr-API: Anpassungen für den Plugin-Betrieb (s. ../Share
 not on github	0.4.6	Flickr-API: von flickr-api abhängige Bibliotheken hinzugefügt (distutils, 
 			httplib2, oauth2, requests, six.py).	
 not on github	0.4.5	Flickr-API: Bibliothek python-flickr-api (alexis-mignon) hinzugefügt
-			Menü Einstellungen (obsolet) ersetzt durch Info-Button.	
+			Menü Einstellungen (obsolet) ersetzt durch Info-Button 	
 30.06.2017 	0.4.4 	Pluginstart: Option zum Anzeigen neuer Updates hinzugefügt.
 			MIT-Lizenz am 17.01.2017 hinzugefügt			
 20.08.2016 	0.4.3	Korrektur: Menü-Fehler im Suche-Button beseitigt (Aufruf Main() erfolgte

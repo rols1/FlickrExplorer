@@ -91,6 +91,7 @@ def Start():
 	HTTP.CacheTime = CACHE_1HOUR 
 	Dict.Reset()
 	ValidatePrefs()
+	Dict['nsid'] = ''		# belegt in MyMenu, Abgleich mit user_id
 
 #----------------------------------------------------------------
 def ValidatePrefs():
@@ -150,7 +151,7 @@ def Main():
 
 	title = L('Flickr Nutzer')
 	summ = L("Suche nach") + ': ' + Prefs['FlickrPeople']	
-	oc.add(DirectoryObject(key=Callback(WebPeople, title), title=title, 
+	oc.add(DirectoryObject(key=Callback(FlickrPeople, title), title=title, 
 		summary=summ, thumb=R('icon-user.png')))
 	
 	# Menü Einstellungen (obsolet) ersetzt durch Info-Button
@@ -163,26 +164,37 @@ def Main():
 	return oc
 	
 ####################################################################################################
-# user_id steuert Rücksprung zu Main oder MyMenu
-# Main auch bei beliebiger user_id aus WebPeople
-def home(cont,user_id,username=''):								# Home-Button, Aufruf: oc = home(cont=oc)
+@route(PREFIX + '/home')
+# Doppelnutzung MyMenu:  Prefs['username'] + FlickrPeople 
+#
+# Rücksprung aus MyMenu/User				-> Main
+# Rücksprung aus MyMenu/Prefs['username']	-> FlickrPeople
+# Rücksprung aus Untermenüs	ohne user_id	-> Main
+# Rücksprung aus Untermenüs	mit user_id		-> MyMenu 
+#
+def home(cont,user_id,username='', returnto=''):			# Home-Button, Aufruf: oc = home(cont=oc)
 	Log('home')					# eingetragener User (Einstellungen)
-	Log('user_id: %s, username: %s' % (str(user_id), str(username)))	
-	Log('Dict[nsid]: %s' % Dict['nsid'])		
-	if user_id and user_id == Dict['nsid']:
-		title = L('Zurueck zu MyFlickr')
-		cont.add(DirectoryObject(key=Callback(MyMenu),title=title, thumb=R('homeMy.png')))
+	Log('user_id: %s, username: %s, returnto: %s' % (str(user_id), str(username), str(returnto)))	
+	
+	if returnto == 'FlickrPeople':				# MyMenu -> FlickrPeople 
+		title = L('Zurueck zu') + ' ' + L('Flickr Nutzer')
+		cont.add(DirectoryObject(key=Callback(FlickrPeople),
+			title=title, thumb=R('homePeople.png')))	
+		return cont
+	if returnto == 'Main':
+		title = L('Zurueck zum Hauptmenue')		# MyMenu -> Hauptmenue
+		cont.add(DirectoryObject(key=Callback(Main),title=title, thumb=R('home.png')))			
 		return cont
 
-	if user_id:										# ausgewählter User (Flickr People)
+	if user_id:									# Untermenüs: User ( Prefs['username'] oder Flickr People)
 		if username == '':
-			user_id,nsid,username,realname = GetUserID(user_id) 
+			user_id,nsid,username,realname = GetUserID(user_id) 					
 		title = L('Zurueck zu') + ' ' + username
-		cont.add(DirectoryObject(key=Callback(WebPeopleSingle, user_id=user_id, username=username),
+		cont.add(DirectoryObject(key=Callback(MyMenu, username=username,user_id=user_id),
 			title=title, thumb=R('homePeople.png')))
 		return cont
 		
-	title = L('Zurueck zum Hauptmenue')				# ohne user_id
+	title = L('Zurueck zum Hauptmenue')			# Untermenüs:  ohne user_id
 	cont.add(DirectoryObject(key=Callback(Main),title=title, thumb=R('home.png')))
 
 	return cont
@@ -190,22 +202,34 @@ def home(cont,user_id,username=''):								# Home-Button, Aufruf: oc = home(cont
 ####################################################################################################
 # Userabhängige Menüs 
 @route(PREFIX + '/MyMenu')
-def MyMenu():
+# 2-fache Verwendung:
+#	1. Aufrufer Main 			- für den User aus Einstellungen Prefs['username']
+#	2. Aufrufer FlickrPeople 	- für einen ausgewählten User aus FlickrPeople 
+#
+def MyMenu(username='',user_id=''):
 	Log('MyMenu')
+	Log('user_id: %s, username: %s' % (str(user_id), str(username)))	
 		
-	if Prefs['username']:								
-		user = Prefs['username'].strip()
-		user_id,nsid,username,realname = GetUserID(user) 
-		# Ergebnis zusätzl. in Dicts (nicht bei ausgewählten usern (WebPeople):
-		Dict['user_id']=user; Dict['nsid']=nsid; Dict['username']=username; Dict['realname']=realname
-		Log('user_id: %s, nsid: %s, username: %s, realname: %s' % (user_id,nsid,username,realname))
-		
-		if 'User not found'	in user_id:							# err code aus GetUserID
-			msg = L("User not found") + ': %s' % user	
-			return ObjectContainer(header=L('Info'), message=msg)			
-					
+	if username=='' and user_id=='':								# aus Main, User aus Einstellungen
+		if Prefs['username']:								
+			user = Prefs['username'].strip()
+			user_id,nsid,username,realname = GetUserID(user) 
+			# Ergebnis zusätzl. in Dicts (nicht bei ausgewählten usern (FlickrPeople):
+			Dict['user_id']=user; Dict['nsid']=nsid; Dict['username']=username; Dict['realname']=realname
+			Log('user_id: %s, nsid: %s, username: %s, realname: %s' % (user_id,nsid,username,realname))
+			
+			if 'User not found'	in user_id:							# err code aus GetUserID
+				msg = L("User not found") + ': %s' % user	
+				return ObjectContainer(header=L('Info'), message=msg)
+				
+	Log(Dict['nsid'])	
+	nsid = user_id				
+	if nsid == Dict['nsid']:	
+		returnto ='Main' 
+	else:
+		returnto ='FlickrPeople' 	
 	oc = ObjectContainer(view_group="InfoList", title2='MyMenu: %s' % username, art=ObjectContainer.art)
-	oc = home(cont=oc, user_id='')								# Home-Button -> Main		
+	oc = home(cont=oc, user_id=user_id, returnto=returnto)			# Home-Button -> Main / FlickrPeople		
 	
 	client_product = str(Client.Product)			# Client.Product: None möglich
 	title='Search: content owned by %s' % (username)
@@ -222,15 +246,15 @@ def MyMenu():
 		title=title, summary=title, thumb=R('icon-stream.png')))
 				
 	title='%s: Albums'	% username		
-	oc.add(DirectoryObject(key=Callback(MyAlbums, title=title, user_id=Dict['nsid'], pagenr=1), 
+	oc.add(DirectoryObject(key=Callback(MyAlbums, title=title, user_id=nsid, pagenr=1), 
 		title=title, summary=title, thumb=R('icon-album.png')))
 				
 	title='%s: Galleries'	% username		
-	oc.add(DirectoryObject(key=Callback(MyGalleries, title=title, user_id=Dict['nsid']), title=title,
+	oc.add(DirectoryObject(key=Callback(MyGalleries, title=title, user_id=nsid), title=title,
 		summary=title, thumb=R('icon-gallery.png')))
 				
 	title='%s: Faves'	% username		
-	oc.add(DirectoryObject(key=Callback(Search_Work, query='#Faves#', user_id=Dict['nsid']), 
+	oc.add(DirectoryObject(key=Callback(Search_Work, query='#Faves#', user_id=nsid), 
 		title=title, summary=title, thumb=R('icon-fav.png')))
 
 	return oc
@@ -290,8 +314,11 @@ def MyGalleries(title, user_id, offset=0):
 		if loop_i > max_count:
 			break
 		
-		Log(i); Log(url);Log(title);Log(img_src);
-		gallery_id = url.split('/')[-2]		# Bsp. 72157697209149355		
+		gallery_id = url.split('/')[-1]		# Bsp. 72157697209149355
+		if url.endswith('/'):
+			gallery_id = url.split('/')[-2]	# Url-Ende bei FlickrPeople ohne / 	
+				
+		Log(i); Log(url);Log(title);Log(img_src); Log(gallery_id);
 		oc.add(DirectoryObject(key=Callback(Gallery_single, title=title,  gallery_id=gallery_id, user_id=user_id),
 				title=title, summary=summ, thumb=img_src))
 				
@@ -379,7 +406,6 @@ def MyAlbums(title, user_id, pagenr):
 	page_next = int(pagenr) + 1
 	tag = 'total: %s %s' % (alben_max, L('Alben'))
 	if (int(pagenr)+1) <= int(pages):
-		Log(int(pagenr) +1)
 		oc.add(DirectoryObject(key=Callback(MyAlbums, title=title_org, user_id=user_id, pagenr=int(pagenr) +1), 
 			title=name, summary=L('Mehr (+ 1)'), tagline=tag, thumb=R(ICON_MEHR_1)))
 	if (int(pagenr)+10) < int(pages):
@@ -429,13 +455,13 @@ def MyAlbumsSingle(title, photoset_id, user_id, pagenr=1):
 	
 ####################################################################################################
 # --------------------------
-#  	WebPeople:  gesucht wird auf der Webseite mit dem Suchbegriff fuer Menue Flickr Nutzer.
+#  	FlickrPeople:  gesucht wird auf der Webseite mit dem Suchbegriff fuer Menue Flickr Nutzer.
 #	Flickr liefert bei Fehlschlag den angemeldeten Nutzer zurück
 # 	Exaktheit der Websuche nicht beeinflussbar.	
 #
-@route(PREFIX + '/WebPeople')
-def WebPeople(pagenr=1):
-	Log('WebPeople'); Log('FlickrPeople: ' + str(Prefs['FlickrPeople']))
+@route(PREFIX + '/FlickrPeople')
+def FlickrPeople(pagenr=1):
+	Log('FlickrPeople'); Log('FlickrPeople: ' + str(Prefs['FlickrPeople']))
 	Log('pagenr: ' + str(pagenr))
 	pagenr = int(pagenr)
 	
@@ -451,7 +477,7 @@ def WebPeople(pagenr=1):
 	oc = ObjectContainer(view_group="InfoList", title2=title2, art = ObjectContainer.art)
 	oc = home(cont=oc, user_id='')								# Home-Button
 				
-	page, msg = RequestUrl(CallerName='WebPeople', url=path, mode='raw')
+	page, msg = RequestUrl(CallerName='FlickrPeople', url=path, mode='raw')
 	if page == '': 
 		return ObjectContainer(header=L('Info'), message=msg)			
 	Log(page[:100])
@@ -480,6 +506,7 @@ def WebPeople(pagenr=1):
 				continue			
 		username =  stringextract('username":"', '"', rec) 
 		username = username.decode(encoding="utf-8")
+		username = unescape(username)
 		realname =  stringextract('realname":"', '"', rec) 
 		iconfarm =  stringextract('iconfarm":"', '"', rec) 
 		iconserver =  stringextract('iconserver":"', '"', rec) 
@@ -495,7 +522,7 @@ def WebPeople(pagenr=1):
 		title = title.decode(encoding="utf-8")
 		summ = "%s: %s" % (L('Fotos'), photosCount)
 		summ = summ + " | %s: %s" % (L('Followers'), followersCount)
-		oc.add(DirectoryObject(key=Callback(WebPeopleSingle, username=username, user_id=nsid), 
+		oc.add(DirectoryObject(key=Callback(MyMenu, username=username, user_id=nsid), 
 			title=username, summary=summ, thumb=thumb))	
 		i = i + 1
 			
@@ -507,43 +534,14 @@ def WebPeople(pagenr=1):
 	# plus/minus 1 Seite:
 	Log(pagenr * len(records)); Log(total)
 	if (pagenr * len(records)) < total:
-		title =  'WebPeople ' + L('Seite') + ' ' +  str(pagenr+1)
-		oc.add(DirectoryObject(key=Callback(WebPeople, pagenr=pagenr+1), 
+		title =  'FlickrPeople ' + L('Seite') + ' ' +  str(pagenr+1)
+		oc.add(DirectoryObject(key=Callback(FlickrPeople, pagenr=pagenr+1), 
 			title=title, summary=L('Mehr (+ 1)'),  thumb=R(ICON_MEHR_1)))	
 	if 	pagenr > 1:	
-		title =  'WebPeople ' + L('Seite') + ' ' +  str(pagenr-1)
-		oc.add(DirectoryObject(key=Callback(WebPeople, pagenr=pagenr-1), 
+		title =  'FlickrPeople ' + L('Seite') + ' ' +  str(pagenr-1)
+		oc.add(DirectoryObject(key=Callback(FlickrPeople, pagenr=pagenr-1), 
 			title=title, summary=L('Weniger (- 1)'),  thumb=R(ICON_WENIGER_1)))	
 		
-	return oc
-
-# --------------------------
-#  WebPeopleSingle entspricht MyMenu (außer Suche). Statt Prefs['username'] wird hier 
-#	der gesuchte Username verwendet
-#	
-@route(PREFIX + '/WebPeopleSingle')
-def WebPeopleSingle(username,user_id):
-	Log('WebPeopleSingle: ' + user_id)
-	
-	oc = ObjectContainer(view_group="InfoList", title2=username, art = ObjectContainer.art)
-	oc = home(cont=oc, user_id='')								# Home-Button
-
-	title='%s: Photostream'	% username							
-	oc.add(DirectoryObject(key=Callback(Search_Work, query='#Photostream#', user_id=user_id), 
-		title=title, summary=title, thumb=R('icon-stream.png')))
-				
-	title='%s: Galleries'	% username		
-	oc.add(DirectoryObject(key=Callback(MyGalleries, title=title, user_id=user_id), title=title,
-		summary=title, thumb=R('icon-gallery.png')))
-				
-	title='%s: Albums'	% username		
-	oc.add(DirectoryObject(key=Callback(MyAlbums, title=title, user_id=user_id, pagenr=1), 
-		title=title, summary=title, thumb=R('icon-album.png')))
-				
-	title='%s: Faves'	% username		
-	oc.add(DirectoryObject(key=Callback(Search_Work, query='#Faves#', user_id=user_id), 
-		title=title, summary=title, thumb=R('icon-fav.png')))	
-
 	return oc
 
 ####################################################################################################
@@ -644,7 +642,7 @@ def Gallery_single(title, gallery_id, user_id):
 # Verwendet wird die freie Textsuche (s. API): Treffer möglich in Titel, Beschreibung + Tags
 # Mehrere Suchbegriffe, getrennt durch Blanks, bewirken UND-Verknüpfung.
 #
-route(PREFIX + '/Search')	
+@route(PREFIX + '/Search')	
 def Search(title, query=None, user_id=None, pagenr=1, **kwargs):
 	Log('Search: ' + query); 
 	# wir springen direkt - Ablauf:
@@ -721,7 +719,7 @@ def BuildPages(title, searchname, SEARCHPATH, pagemax=1, perpage=1, pagenr=1):
 		pagenr 		= 1											# Start mit Seite 
 		Log('Flickr: pagemax %s, total %s, perpage %s' % (pagemax, photototal, perpage))
 	
-	pagenr = int(pagenr); pagemax = int(pagemax); 		
+	pagenr = int(pagenr); pagemax = int(pagemax); 			
 	maxPageContent = 500						# Maximum Flickr	
 	if Prefs['maxPageContent']:					# Objekte pro Seite (Einstellungen)
 		maxPageContent = int(Prefs['maxPageContent'])
@@ -756,7 +754,8 @@ def BuildPages(title, searchname, SEARCHPATH, pagemax=1, perpage=1, pagenr=1):
 	Log('Client: ' + client) 
 	
 	pagemax = int(pagemax)
-	if pagemax == 1:						# nur 1 Seite -> ShowPhotoObject
+	if pagemax == 1:						# nur 1 Seite -> ShowPhotoObject direkt
+		title = title + ' %s'  % 1			# Bsp. "scott wilson Seite 1"
 		oc = ShowPhotoObject(title=title, path=SEARCHPATH)
 		return oc 
 			
@@ -785,7 +784,6 @@ def BuildPages(title, searchname, SEARCHPATH, pagemax=1, perpage=1, pagenr=1):
 	tag = 'total: %s ' % pagemax + L('Seiten')
 	if pagenr  <= pagemax:
 		pagenr_next = pagenr
-		Log(pagenr_next)
 		title = L('Mehr (+ 1)')
 		oc.add(DirectoryObject(key=Callback(BuildPages, title=title_org, searchname=searchname, SEARCHPATH=SEARCHPATH, 
 			pagemax=pagemax, pagenr=pagenr_next), title=title, thumb=R(ICON_MEHR_1)))
@@ -938,7 +936,7 @@ def BuildPath(method, query_flickr, user_id, pagenr):
 
 	if user_id:									# None bei allg. Suche
 		if 'None' not in user_id:				# PHT-Dummy
-			# user_id = Dict['nsid']				# beliebige user_id aus WebPeople
+			# user_id = Dict['nsid']				# beliebige user_id aus FlickrPeople
 			PATH =  PATH + "&user_id=%s" % (user_id)
 		
 	# Suchstring + Extras anfügen für Fotoabgleich - 
