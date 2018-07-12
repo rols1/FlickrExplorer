@@ -3,7 +3,7 @@ FlickrExplorer
 
 Download aktuelle Version: https://github.com/rols1/FlickrExplorer/releases
 
-#### Rückmeldungen im Plex-Forum willkommen: https://forums.plex.tv/discussion/228703/FlickrExplorer
+#### Rückmeldungen im Plex-Forum willkommen: https://forums.plex.tv/t/rel-flickrexplorer/154804
 direkt: rols1@gmx.de 
   
 #### Funktionen (getestet in Chrome und OpenPHT)
