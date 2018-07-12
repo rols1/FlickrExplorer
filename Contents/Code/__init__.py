@@ -9,9 +9,9 @@ import lxml.html
 
 import updater
 
-# +++++ Plex-Plugin-Flickr +++++
-VERSION =  '0.5.7'		
-VDATE = '04.07.2018'
+# +++++ FlickrExplorer +++++
+VERSION =  '0.5.8'		
+VDATE = '12.07.2018'
 
 ''' 
 ####################################################################################################
@@ -25,7 +25,7 @@ VDATE = '04.07.2018'
 # 	Licensed under MIT License (MIT)
 # 	(previously licensed under GPL 3.0)
 # 	A copy of the License you find here:
-#		https://github.com/rols1/Plex-Plugin-Flickr/blob/master/LICENSE.md
+#		https://github.com/rols1/FlickrExplorer/blob/master/LICENSE.md
 #
 #
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING 
@@ -38,7 +38,7 @@ VDATE = '04.07.2018'
 
 ####################################################################################################
 
-NAME 				= 'Plex-Plugin-Flickr'
+NAME 				= 'FlickrExplorer'
 PREFIX				= '/video/flickr'			
 												
 
@@ -75,7 +75,7 @@ BASE 				= "https://www.flickr.com"
 GALLERY_PATH 		= "https://www.flickr.com/photos/flickr/galleries/"
 PHOTO_PATH 			= "https://www.flickr.com/photos/"
 
-REPO_NAME 			= 'Plex-Plugin-Flickr'
+REPO_NAME 			= 'FlickrExplorer'
 GITHUB_REPOSITORY 	= 'rols1/' + REPO_NAME
 REPO_URL 			= 'https://github.com/{0}/releases/latest'.format(GITHUB_REPOSITORY)
 

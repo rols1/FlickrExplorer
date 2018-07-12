@@ -4,8 +4,8 @@ import re, urllib, os
 FEED_URL = 'https://github.com/{0}/releases.atom'
 
 ################################################################################
-TITLE = 'Plex-Plugin-Flickr'
-GITHUB_REPOSITORY = 'rols1/Plex-Plugin-Flickr'
+TITLE = 'FlickrExplorer'
+GITHUB_REPOSITORY = 'rols1/FlickrExplorer'
 PREFIX = '/video/flickr'
 
 # 09.10.2017: veraltetes releases.atom abgelöst durch api-url (Vorschlag @dane22)

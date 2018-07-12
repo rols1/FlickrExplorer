@@ -1,8 +1,10 @@
 CHANGE HISTORY 	Plex-Plugin-Flickr
---------------	Releases: 	https://github.com/rols1/Plex-Plugin-Flickr/releases
---------------				
+--------------	Releases: 	https://github.com/rols1/FlickrExplorer/releases
+--------------	vor v0.5.7:	https://github.com/rols1/Plex-Plugin-Flickr/releases			
 
 
+12.07.2018	0.5.8	Änderung des Namens Plex-Plugin-Flickr -> FlickrExplorer zur Vermeidung von
+			trademark-Konflikten.
 04.07.2018	0.5.7	Integration WebPeopleSingle in MyMenu - Anpassung home. WebPeopleSingle entfernt 
 			(nicht mehr benötigt).
 			Route home ergänzt.

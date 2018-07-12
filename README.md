@@ -1,9 +1,9 @@
-﻿Plex-Plugin-Flickr
-==================
+FlickrExplorer
+==============
 
-Download aktuelle Version: https://github.com/rols1/Plex-Plugin-Flickr/releases
+Download aktuelle Version: https://github.com/rols1/FlickrExplorer/releases
 
-#### Rückmeldungen im Plex-Forum willkommen: https://forums.plex.tv/discussion/228703/plex-plugin-flickr
+#### Rückmeldungen im Plex-Forum willkommen: https://forums.plex.tv/discussion/228703/FlickrExplorer
 direkt: rols1@gmx.de 
   
 #### Funktionen (getestet in Chrome und OpenPHT)
