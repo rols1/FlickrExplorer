@@ -21,16 +21,17 @@ direkt: rols1@gmx.de
 
 INSTALLATION (engl.):
 ===================  
+This channel can be installed via WebTools or manually follow the directions below:
 - Extract zip file (latest release) to the Plex Media Server plugins folder and Restart Plex Media Server.
 - Platforms running a Linux based system need to ```chown plex:plex -R FlickrExplorer.bundle```.
 
+
 INSTALLATION (deutsch):
-===================  
+=================== 
+das Plugin kann via WebTools oder manuell wie folgt installiert werden:
 - die zip-Datei (latest release) im Ordner …/Plex Media Server/Plug-ins entpacken und den Plex Media Server neu starten.
 - Auf Linux-Systemen muss im Verzeichnis Plex Media Server das Kommando ```chown plex:plex -R FlickrExplorer.bundle``` ausgeführt werden.
 
-
-Beim Aktualisieren einfach den .bundle Ordner löschen und die neue Version an seine Stelle kopieren.
 
 UPDATES:
 ===================  
