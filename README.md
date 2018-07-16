@@ -35,7 +35,7 @@ das Plugin kann via WebTools oder manuell wie folgt installiert werden:
 
 UPDATES:
 ===================  
-Für Updates kann das integrierte Update-Modul verwendet werden.
+Für Updates kann auch das integrierte Update-Modul verwendet werden.
  
  Hauptmenü:
 ===================  

@@ -3,6 +3,8 @@ CHANGE HISTORY 	FlickrExplorer
 --------------	vor v0.5.7:	https://github.com/rols1/Plex-Plugin-Flickr/releases			
 
 
+16.07.2018	0.5.9	Für PHT: Vermeidung von Plugin-Aus bei "return ObjectContainer" - ersetzt bei leeren Inhalten
+			durch Menübutton (DirectoryObject).  	
 12.07.2018	0.5.8	Änderung des Namens Plex-Plugin-Flickr -> FlickrExplorer zur Vermeidung von
 			trademark-Konflikten.
 04.07.2018	0.5.7	Integration WebPeopleSingle in MyMenu - Anpassung home. WebPeopleSingle entfernt 

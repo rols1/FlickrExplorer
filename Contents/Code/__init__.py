@@ -10,8 +10,8 @@ import lxml.html
 import updater
 
 # +++++ FlickrExplorer +++++
-VERSION =  '0.5.8'		
-VDATE = '12.07.2018'
+VERSION =  '0.5.9'		
+VDATE = '16.07.2018'
 
 ''' 
 ####################################################################################################
@@ -281,15 +281,18 @@ def MyGalleries(title, user_id, offset=0):
 				
 	page, msg = RequestUrl(CallerName='MyGalleries', url=path, mode='raw')
 	if page == '': 
-		return ObjectContainer(header=L('Info'), message=msg)			
+		return ObjectContainer(header=L('Info'), message=msg)	# Plugin-Aus in PHT hier OK	
 	Log(page[:100])
 		
-	cnt = stringextract('total="', '"', page)		# im  Header
+	cnt = stringextract('total="', '"', page)					# im  Header
 	pages = stringextract('pages="', '"', page)
 	Log('Galleries: %s, Seiten: %s' % (cnt, pages))
-	if cnt == '0':
+	if cnt == '0' or pages == '':
 		msg = L('Keine Gallerien gefunden')
-		return ObjectContainer(header=L('Info'), message=msg)
+		# return ObjectContainer(header=L('Info'), message=msg)	# PHT: Plugin-Aus
+		oc.add(DirectoryObject(key = Callback(MyGalleries,title=title, user_id=user_id, offset=offset), 
+			title=msg, thumb=R(ICON_INFO)))
+		return oc
 		
 	records = blockextract('<gallery id', '', page)
 	pagemax = int(len(records))
@@ -352,7 +355,7 @@ def MyAlbums(title, user_id, pagenr):
 				
 	page, msg = RequestUrl(CallerName='MyAlbums', url=path, mode='raw')
 	if page == '': 
-		return ObjectContainer(header=L('Info'), message=msg)			
+		return ObjectContainer(header=L('Info'), message=msg)	# Plugin-Aus in PHT hier OK				
 	Log(page[:100])
 		
 	pages = stringextract('pages="', '"', page)		# im  Header, Anz. Seiten
@@ -361,10 +364,6 @@ def MyAlbums(title, user_id, pagenr):
 	thispagenr = stringextract('page="', '"', page)		# im  Header, sollte pagenr entsprechen
 	Log('Alben: %s, Seite: %s von %s, perpage: %s' % (alben_max, thispagenr, pages, perpage))
 	
-	if  pages == '0' or '<rsp stat="ok">' not in page:			
-		msg = L('Keine Alben gefunden')
-		return ObjectContainer(header=L('Info'), message=msg)
-		
 	name = '%s %s/%s' % (L('Seite'), pagenr, pages)	
 	oc = ObjectContainer(view_group="InfoList", title2=name, art=ObjectContainer.art) #, no_cache=True)
 	client = Client.Platform
@@ -374,6 +373,13 @@ def MyAlbums(title, user_id, pagenr):
 		oc = home(cont=oc,user_id=user_id)				# Home-Button macht bei PHT das PhotoObject unbrauchbar
 	Log('Client: ' + client) 
 			
+	if  pages == '0' or '<rsp stat="ok">' not in page:			
+		msg = L('Keine Alben gefunden')
+		# return ObjectContainer(header=L('Info'), message=msg)	# PHT: Plugin-Aus
+		oc.add(DirectoryObject(key = Callback(MyAlbums,title=title, user_id=user_id, pagenr=pagenr), 
+			title=msg, thumb=R(ICON_INFO)))
+		return oc
+		
 	records = blockextract('<photoset id', '', page)
 	Log('records: ' + str(len(records)))
 	
@@ -710,8 +716,12 @@ def BuildPages(title, searchname, SEARCHPATH, pagemax=1, perpage=1, pagenr=1):
 			return ObjectContainer(header=L('Info'), message=msg)			
 		Log(page[:100])
 		if  '<rsp stat="ok">' not in page or 'pages="0"' in page:			
-			msg = 'Sorry, no hit.'
-			return ObjectContainer(header=L('Info'), message=msg)
+			msg = L('kein Treffer')
+			# return ObjectContainer(header=L('Info'), message=msg)	# PHT: Plugin-Aus
+			oc = ObjectContainer(view_group="InfoList", title2=title, art = ObjectContainer.art)
+			oc.add(DirectoryObject(key=Callback(BuildPages,title=title,  searchname=searchname, 
+				SEARCHPATH=SEARCHPATH, pagenr=1), title=msg, thumb=R(ICON_INFO)))
+			return oc
 
 		pagemax		= stringextract('pages="', '"', page)
 		photototal 	=  stringextract('total="', '"', page)		# z.Z. n.b.
