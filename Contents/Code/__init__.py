@@ -10,8 +10,8 @@ import lxml.html
 import updater
 
 # +++++ FlickrExplorer +++++
-VERSION =  '0.5.9'		
-VDATE = '16.07.2018'
+VERSION =  '0.6.1'		
+VDATE = '05.08.2018'
 
 ''' 
 ####################################################################################################
@@ -150,7 +150,7 @@ def Main():
 	oc.add(DirectoryObject(key=Callback(WebGalleries, pagenr=1), title=title, thumb=R(ICON_GALLERY)))
 
 	title = L('Flickr Nutzer')
-	summ = L("Suche nach") + ': ' + Prefs['FlickrPeople']	
+	summ = L("Suche nach") + ': '  + str(Prefs['FlickrPeople'])	
 	oc.add(DirectoryObject(key=Callback(FlickrPeople, title), title=title, 
 		summary=summ, thumb=R('icon-user.png')))
 	
@@ -165,6 +165,7 @@ def Main():
 	
 ####################################################################################################
 @route(PREFIX + '/home')
+# PHT: Home-Button macht PhotoObject und VideoObject unbrauchbar!
 # Doppelnutzung MyMenu:  Prefs['username'] + FlickrPeople 
 #
 # Rücksprung aus MyMenu/User				-> Main
@@ -437,7 +438,7 @@ def MyAlbums(title, user_id, pagenr):
 # Bezeichnung in Flickr-API: Photosets
 #	Mehrere Seiten - anders als MyGalleries
 #	Flickr-Ausgabe im xml-Format.
-# Seitensteuerung durch BuildPages (-> ShowPhotoObject)
+# Seitensteuerung durch BuildPages (-> SeparateVideos -> ShowPhotoObject, ShowVideos)
 @route(PREFIX + '/MyAlbumsSingle')
 def MyAlbumsSingle(title, photoset_id, user_id, pagenr=1):
 	Log('MyAlbumsSingle')
@@ -652,7 +653,7 @@ def Gallery_single(title, gallery_id, user_id):
 def Search(title, query=None, user_id=None, pagenr=1, **kwargs):
 	Log('Search: ' + query); 
 	# wir springen direkt - Ablauf:
-	#	Search -> Search_Work -> BuildPages (Seitensteuerung) -> ShowPhotoObject
+	#	Search -> Search_Work -> BuildPages (-> SeparateVideos -> ShowPhotoObject, ShowVideos)
 	ObjectContainer = Search_Work(query=query, user_id=user_id)	 
 	return	ObjectContainer
 	
@@ -661,7 +662,7 @@ def Search(title, query=None, user_id=None, pagenr=1, **kwargs):
 # Search_Work: ermöglicht die Flickr-Suchfunktion außerhalb der normalen Suchfunktion, z.B.
 #	Photostream + Faves. Die normale Suchfunktion startet in Search, alle anderen hier.
 # Ablauf: 
-#	Search_Work -> BuildPages (Seitensteuerung) -> ShowPhotoObject
+#	Search_Work -> Seitensteuerung durch BuildPages (-> SeparateVideos -> ShowPhotoObject, ShowVideos)
 #
 # query='#Suchbegriff#' möglich (MyMenu: MyPhotostream, MyFaves) - Behandl. in BuildPath
 #  query='None' möglich (Photostream)
@@ -673,12 +674,12 @@ def Search(title, query=None, user_id=None, pagenr=1, **kwargs):
 def Search_Work(query, user_id, SEARCHPATH=''):		
 	Log('Search_Work: ' + query); 		
 	
-	query_flickr = query.replace(' ', '%20')		# Leerz. -> url-konform 
+	query_flickr = query.replace(' ', '%20')		# Leerz. -> url-konform
 	if query == '#Faves#':							# MyFaves
-		SEARCHPATH = BuildPath(method='flickr.favorites.getList', query_flickr=query, user_id=user_id, pagenr='')
+		SEARCHPATH = BuildPath(method='flickr.favorites.getList', query_flickr=query_flickr, user_id=user_id, pagenr='')
 	else:
 		# BuildPath liefert zusätzlich Dict['extras_list'] für Fotoauswahl (s.u.)
-		SEARCHPATH = BuildPath(method='flickr.photos.search', query_flickr=query, user_id=user_id, pagenr='')
+		SEARCHPATH = BuildPath(method='flickr.photos.search', query_flickr=query_flickr, user_id=user_id, pagenr='')
 	Log(SEARCHPATH)
 				  	
 	if query == 'None':								# von Photostream
@@ -696,12 +697,12 @@ def Search_Work(query, user_id, SEARCHPATH=''):
 #---------------------------------------------------------------- 
 @route(PREFIX + '/BuildPages')
 # Ausgabesteuerung für Fotoseiten: Buttons für die einzelnen Seiten, einschl. Mehr/Weniger.
-#	Falls nur 1 Seite vorliegt, wird ShowPhotoObject direkt angesteuert.
+#	Falls nur 1 Seite vorliegt, wird SeparateVideos direkt angesteuert.
 # Auslagerung ShowPhotoObject für PHT erforderlich (verträgt keine Steuer-Buttons) 
 # searchname steuert Belegung von title2 des ObjectContainers - Eingefassung
 #	 durch ## kennzeichnet: keine Suche
 # perpage setzen wir wg. des PHT-Problems nicht bei der Fotoausgabe einer einzelnen 
-#	Seite um - Flickr-Default hier 100.
+#	Seite um - Flickr-Default hier 100 (dto. bei Suche).
 # Bei Überschreitung der Seitenzahl (page) zeigt Flickr die letzte verfügbare Seite.
 #
 def BuildPages(title, searchname, SEARCHPATH, pagemax=1, perpage=1, pagenr=1):
@@ -740,6 +741,7 @@ def BuildPages(title, searchname, SEARCHPATH, pagemax=1, perpage=1, pagenr=1):
 	pagenr = min(pagenr, pagemax)
 	Log("Plugin: pagenr %d, maxPageContent %d, pagemax %d" % (pagenr, maxPageContent, pagemax))
 
+	# user_id ermitteln für home (PHT-Problem)
 	# Pfade ohne user_id möglich (z.B. Suche + Photostream  aus Main)
 	try:
 		user_id = re.search(u'user_id=(\d+)@N0(\d+)', SEARCHPATH).group(0)		#user_id=66956608@N06
@@ -760,13 +762,14 @@ def BuildPages(title, searchname, SEARCHPATH, pagemax=1, perpage=1, pagenr=1):
 	if client == None:
 		client = ''
 	if client.find ('Plex Home Theater'): 
-		oc = home(cont=oc,user_id=user_id)				# Home-Button macht bei PHT das PhotoObject unbrauchbar
+		oc = home(cont=oc,user_id=user_id)				# # Home-Button nicht in PHT
 	Log('Client: ' + client) 
 	
 	pagemax = int(pagemax)
-	if pagemax == 1:						# nur 1 Seite -> ShowPhotoObject direkt
+	if pagemax == 1:						# nur 1 Seite -> SeparateVideos direkt
 		title = title + ' %s'  % 1			# Bsp. "scott wilson Seite 1"
-		oc = ShowPhotoObject(title=title, path=SEARCHPATH)
+		Log('pagemax=1, jump to SeparateVideos')
+		oc = SeparateVideos(title=title, path=SEARCHPATH)
 		return oc 
 			
 	for i in range(pagemax):
@@ -779,7 +782,8 @@ def BuildPages(title, searchname, SEARCHPATH, pagemax=1, perpage=1, pagenr=1):
 		path2 = path2[pos:]
 		path = path1 + '&page=%s' %  str(pagenr) + path2 # Teil1 + Teil2 wieder verbinden
 		# Log(path);  # Log(path1); Log(path2);
-		oc.add(DirectoryObject(key=Callback(ShowPhotoObject, title=title, path=path),
+		# SeparateVideos -> ShowPhotoObject, ShowVideos:					
+		oc.add(DirectoryObject(key=Callback(SeparateVideos, title=title, path=path),
 			title=title, thumb=R('icon-next.png')))
 			
 		pagenr = pagenr + 1 
@@ -789,7 +793,7 @@ def BuildPages(title, searchname, SEARCHPATH, pagemax=1, perpage=1, pagenr=1):
 			break	
 			
 	# auf mehr prüfen:	
-	# Begrenzung max/min s.o.	
+	# Begrenzung max/min s.o.
 	Log(pagenr); Log(pagemax); Log(maxPageContent);
 	tag = 'total: %s ' % pagemax + L('Seiten')
 	if pagenr  <= pagemax:
@@ -836,21 +840,20 @@ def BuildPages(title, searchname, SEARCHPATH, pagemax=1, perpage=1, pagenr=1):
 				
 	return oc
 #---------------------------------------------------------------- 
-@route(PREFIX + '/ShowPhotoObject')
-#	ShowPhotoObject wegen PHT ausgelagert (veträgt beim PhotoObject keine weiteren
-#		Menübuttons (Home, Mehr).
-#	path muss die passende pagenr enthalten
-#	An title wird die aktuelle Seitennummer (page) angehängt
-def ShowPhotoObject(title, path):
-	Log('ShowPhotoObject')
-	# Log(path)
-		
-	page, msg = RequestUrl(CallerName='ShowPhotoObject', url=path, mode='raw')
+@route(PREFIX + '/SeparateVideos')
+#	SeparateVideos: Aufruf durch BuildPages falls Prefs['showVideos'] gewählt
+#	- 2 Buttons,  falls die Seite  (path)  sowohl Videos als auch Fotos enthält.
+#		andernfalls wird direkt zu ShowPhotoObject oder ShowVideos verzweigt
+#		(Seite wird aus dem Cache erneut geladen)
+#	- user_id,username,realname werden hier ermittelt + übergeben
+def SeparateVideos(title, path):
+	Log('SeparateVideos')
+
+	page, msg = RequestUrl(CallerName='SeparateVideos', url=path, mode='raw')
 	if page == '': 
 		return ObjectContainer(header=L('Info'), message=msg)			
 	Log(page[:100])								# Ergebnis im XML-Format, hier in strings verarbeitet
-	pagenr		= stringextract('page="', '"', page)
-	
+
 	# Rückwärtssuche: user_id -> username + realname 
 	#	1. user_id aus path ermitteln, 2.  Aufruf flickr.people.getInfo
 	#	nur falls user_id bekannt - nicht bei den Publics (müsste via nsid bei
@@ -867,6 +870,47 @@ def ShowPhotoObject(title, path):
 	if user_id and ('None' not in user_id):	 # 'None' = PHT-Dummy
 		user_id,nsid,username,realname = GetUserID(user_id)		# User-Profil laden
 	Log('user_id %s, username %s, realname %s'	% (user_id,username,realname))
+	
+	if not Prefs['showVideos']:										#	keine Videos zeigen
+		oc =  ShowPhotoObject(title,path,user_id,username,realname)	#	direkt
+		return oc
+		
+
+ 	if 'media="video"' in page and 'media="photo"' in page:	# Auswahlbuttons für Fotos + Videos zeigen
+		oc = ObjectContainer(view_group="InfoList", title2=title, art = ObjectContainer.art)
+		oc = home(cont=oc,user_id=user_id, username=username)	# Home
+		
+		title = L("zeige Fotos")
+		oc.add(DirectoryObject(key=Callback(ShowPhotoObject, title=title,path=path,
+			user_id=user_id,username=username,realname=realname), title=title, thumb=R('icon-photo.png')))
+		title = L("zeige Videos")
+		oc.add(DirectoryObject(key=Callback(ShowVideos, title=title,path=path,
+			user_id=user_id,username=username,realname=realname), title=title, thumb=R('icon-video.png')))	
+	else:
+		if 'media="video"' in page:				# nur Videos
+			oc =  ShowVideos(title,path,user_id,username,realname)  	# 	direkt			
+		else:									# nur Fotos
+			oc =  ShowPhotoObject(title,path,user_id,username,realname)  # 	direkt
+	
+	return oc
+
+#---------------------------------------------------------------- 
+@route(PREFIX + '/ShowPhotoObject')
+#	Aufrufer: SeparateVideos
+#	ShowPhotoObject wegen PHT ausgelagert (veträgt beim PhotoObject keine weiteren
+#		Menübuttons (Home, Mehr).
+#	path muss die passende pagenr enthalten
+#	An title wird die aktuelle Seitennummer (page) angehängt
+def ShowPhotoObject(title,path,user_id,username,realname):
+	Log('ShowPhotoObject')
+	# Log(path)
+		
+	page, msg = RequestUrl(CallerName='ShowPhotoObject', url=path, mode='raw')
+	if page == '': 
+		return ObjectContainer(header=L('Info'), message=msg)			
+	Log(page[:100])								# Ergebnis im XML-Format, hier in strings verarbeitet
+	pagenr		= stringextract('page="', '"', page)
+	
 		
 	oc = ObjectContainer(view_group="InfoList", title2=title, art = ObjectContainer.art)
 	client = Client.Platform
@@ -879,12 +923,18 @@ def ShowPhotoObject(title, path):
 	records = blockextract('<photo id', '', page)	# ShowPhotoObject:  nur '<photo id'-Blöcke zulässig 	
 	Log('records: %s' % str(len(records)))
 	extras_list = Dict['extras_list']
+	try:									# Back in Browser: ValueError: list.remove(x)
+		extras_list.remove('media')			# 1. Eintrag media enthält keinen URL
+	except:
+		pass
 	Log(extras_list);   # Log(list)			# bei Bedarf
 		
 		
 	image = 1
-	for s in records:						
-		pid =  stringextract('id=\"', '\"', s) 
+	for s in records:
+		if 'media="video"' in s:
+			continue								
+		pid =  stringextract('photo id=\"', '\"', s) 	# photo id auch bei Videos
 		owner =  stringextract('owner=\"', '\"', s) 	
 		secret =  stringextract('secret=\"', '\"', s) 
 		serverid =  stringextract('server=\"', '\"', s) 
@@ -936,6 +986,105 @@ def ShowPhotoObject(title, path):
 	return oc
 
 #---------------------------------------------------------------- 
+@route(PREFIX + '/ShowVideos')
+def ShowVideos(title,path,user_id,username,realname):
+	Log('ShowVideos')
+	# Log(path)
+	
+	oc = ObjectContainer(view_group="InfoList", title2=title, art = ObjectContainer.art)
+	client = Client.Platform
+	if client == None:
+		client = ''
+	if client.find ('Plex Home Theater'): 
+		oc = home(cont=oc,user_id=user_id, username=username)	# Home-Button macht bei PHT das PhotoObject unbrauchbar
+	Log('Client: ' + client) 
+	
+	page, msg = RequestUrl(CallerName='ShowVideos', url=path, mode='raw')
+	if page == '': 
+		return ObjectContainer(header=L('Info'), message=msg)			
+	Log(page[:100])								# Ergebnis im XML-Format, hier in strings verarbeitet
+	
+	records = blockextract('<photo id', '', page)	 	
+	Log('records: %s' % str(len(records)))
+	i=0
+	for s in records:						
+		if 'media="video"' not in s:			# Sicherung (sollte hier nicht vorkommen)
+			continue
+		i=i+1		
+		pid 	=	stringextract('id=\"', '\"', s) 
+		owner 	=  	stringextract('owner=\"', '\"', s) 	
+		secret	=  	stringextract('secret=\"', '\"', s) 
+		serverid =  stringextract('server=\"', '\"', s) 
+		farmid 	=  	stringextract('farm=\"', '\"', s) 		
+		title 	=  	stringextract('title=\"', '\"', s)	
+		url 	= 	'https://www.flickr.com/video_download.gne?id=%s' % pid
+		
+		# gewünschte Bildgröße hier nicht relevant
+		img_src = 'https://farm%s.staticflickr.com/%s/%s_%s.jpg' % (farmid, serverid, pid, secret)
+		title = unescape(title)					# Web Client hat Probleme mit ausländ. Zeichen
+		title = title.decode(encoding="utf-8")
+		summ  = owner.decode(encoding="utf-8")
+		if title == '':
+			title = "Video %s" % str(i)
+		else:
+			"Video %s| %s" % (str(i), title)
+		
+		Log(title); Log(pid); Log(img_src); Log(url);	
+		oc.add(CreateVideoClipObject(url=url, title=title, 
+			summary=summ, meta=url, thumb=img_src))			
+
+	return oc
+#---------------------------------------------------------------- 
+@route(PREFIX + '/PlayVideo')  
+def PlayVideo(url, **kwargs):
+	Log('PlayVideo: ' + url)
+	
+	# Header-Check: Flickr gibt bei Fehlern HTML-Seite zurück 
+	#	Bsp.:  <h1>This page is private.</h1>
+	#	OK: content-type': 'video/mp4'
+	page, msg = RequestUrl(CallerName='PlayAudio, Header-Check', url=url, mode='GetOnlyHeader')
+	Log(page)
+
+	if 'text/html' in str(page):
+		Log('Error: Textpage ' + url)
+		return Redirect(R('PrivatePage720x640.mp4'))	# ffmpeg-erzeugtes Fehlerbild-mp4-Video (10 sec)
+	
+	return Redirect(url)
+#-----------------------------
+	
+@route(PREFIX + '/CreateVideoClipObject')	#
+def CreateVideoClipObject(url, title, summary, meta, thumb, include_container=False, **kwargs):
+	title = title.encode("utf-8")		
+	Log('CreateVideoClipObject')
+	Log(url); 
+	Log(Client.Platform)
+
+	videoclip_obj = VideoClipObject(
+	key = Callback(CreateVideoClipObject, url=url, title=title, summary=summary,
+		meta=meta, thumb=thumb, include_container=True),
+		rating_key = url,
+		title = title,
+		summary = summary,
+		thumb = thumb,
+		items = [
+			MediaObject(
+				parts = [
+					# PartObject(key=url)						# reicht für Webplayer
+					PartObject(key=Callback(PlayVideo, url=url)) 
+				],
+				container = Container.MP4,  	# weitere Video-Details für Chrome nicht erf., aber Firefox 
+				video_codec = VideoCodec.H264,	# benötigt VideoCodec + AudioCodec zur Audiowiedergabe
+				audio_codec = AudioCodec.AAC,	# 
+				
+			)  									
+	])
+
+	if include_container:						
+		return ObjectContainer(objects=[videoclip_obj])
+	else:
+		return videoclip_obj
+
+#---------------------------------------------------------------- 
 #  method: Flickr-API-Methode
 #  pagenr muss Aufrufer beisteuern
 def BuildPath(method, query_flickr, user_id, pagenr):
@@ -965,7 +1114,7 @@ def BuildPath(method, query_flickr, user_id, pagenr):
 		nr = val.split('/')[0].strip	
 		sortorder = val.split('/')[1].strip()
 		PATH = '%s&sort=%s' % (PATH, sortorder)	
-		
+				
 	if pagenr:
 		PATH =  PATH + "&page=%s" % pagenr
 	
@@ -1026,22 +1175,24 @@ def GetUserID(user):
 	
 #----------------------------------------------------------------  
 def BuildExtras():		# Url-Parameter für Bildgrößen - abh. von Einstellungen
-	extras = "url_o,url_k,url_h,url_l,url_c,url_z"	# URL-Anforderung, sortiert von groß nach klein - Default
+	# URL-Anforderung, sortiert von groß nach klein - Default
+	# media: Ausgabe photo oder video
+	extras = "media,url_o,url_k,url_h,url_l,url_c,url_z"	
 	# Breiten: o = Original, k=2048, h=1600, l=1024, c=800, z=640
 	pref_max_width = Prefs['max_width']
 	# pref_max_width = 1600		# Test
 	if pref_max_width == "Originalbild":
-		extras = "url_o,url_k,url_h,url_l,url_c,url_z"
+		extras = "media,url_o,url_k,url_h,url_l,url_c,url_z"
 	if pref_max_width == "2048":
-		extras = "url_k,url_h,url_l,url_c,url_z"
+		extras = "media,url_k,url_h,url_l,url_c,url_z"
 	if pref_max_width == "1600":
-		extras = "url_h,url_l,url_c,url_z"
+		extras = "media,url_h,url_l,url_c,url_z"
 	if pref_max_width == "1024":
-		extras = "url_l,url_c,url_z"	
+		extras = "media,url_l,url_c,url_z"	
 	if pref_max_width == "800":
-		extras = "url_c,url_z"
+		extras = "media,url_c,url_z"
 	if pref_max_width == "640":
-		extras = "url_z"
+		extras = "media,url_z"
 	
 	Log(pref_max_width); Log(extras)
 	extras_list = extras.split(",")						# Für Foto-Auswahl  in Suchergebnis
@@ -1130,6 +1281,8 @@ def RequestUrl(CallerName, url, mode='raw'):
 	page=''; msg=''
 	try:															
 		Log("RequestUrl: called from %s, mode=%s" % (CallerName, mode))	
+		if mode == 'GetOnlyHeader':
+			page = HTTP.Request(url).headers
 		if mode	== 'raw':
 			page = HTTP.Request(url, cacheTime=1).content
 		if mode	== 'html':

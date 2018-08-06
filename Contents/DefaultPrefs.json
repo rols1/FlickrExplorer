@@ -62,6 +62,12 @@
 		"default": ""
 	},
 	{
+		"id": "showVideos",
+		"label": "Videos zeigen, falls verfuegbar",
+		"type": "bool",
+		"default": "false"
+    	},    
+	{
 		"id": "InfoUpdate",
 		"label": "neues Update beim Start des Plugins anzeigen",
 		"type": "bool",

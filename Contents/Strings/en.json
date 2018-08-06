@@ -52,8 +52,10 @@
 	"maximale Anzahl Objekte pro Seite": "maximum number of items per page",
 	"Sortierung fuer Suche": "Sort Order for Search",
 	"Fotosuche: maximale Bildbreite": "Photosearch: maximum image width",
-	"Originalbild": "Original Photo"
-
+	"Originalbild": "Original Photo",
+	"Videos zeigen, falls verfuegbar": "show videos, if available",
+	"zeige Videos": "show videos",
+	"zeige Fotos": "show photos"
 }
 
 
