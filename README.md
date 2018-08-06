@@ -11,6 +11,7 @@ direkt: rols1@gmx.de
 - Suche nach beliebigen Fotos (Hauptmenü)
 - Blättern in öffentlichen Flickr Fotos (Photostream)
 - Blättern in öffentlichen Flickr Gallerien (Web Gallerien)
+- zeigt Videos, falls verfügbar
 - Suche nach anderen Flickr Nutzern und Blättern in dessen öffentlichen Beständen (Photostream, Gallerien, Alben, Favoriten)
 - MyFlickr: Suche und Blättern im eigenen öffentlichen Bestand (Photostream, Gallerien, Alben, Favoriten)
 - Sprachen: Deutsch / Englisch
@@ -51,7 +52,7 @@ FlickrPeople Menü (ausgewählt: flicoholic):
 
 Einstellungen
 ===================  
-![img](https://discourse-cdn-sjc1.com/plex/uploads/default/optimized/3X/d/0/d022d688343b124904422828b85c29fdd9e1122a_1_544x500.png)
+![img](https://discourse-cdn-sjc1.com/plex/uploads/default/optimized/3X/b/c/bcec309ee562bbf3997107bf4ad3de9d6a166f43_1_536x500.png)
 
 
 
