@@ -41,7 +41,7 @@ Für Updates kann auch das integrierte Update-Modul verwendet werden.
  
  Hauptmenü:
 ===================  
-![img](https://discourse-cdn-sjc1.com/plex/uploads/default/original/3X/7/0/701551f9e411b99e20e743c017060564c55415e1.png)
+![img](https://github.com/rols1/PluginPictures/raw/master/Kodi/FlickrExplorer/Plex_Main_Menu.png)
 
 
 
