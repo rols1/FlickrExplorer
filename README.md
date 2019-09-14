@@ -43,17 +43,6 @@ Für Updates kann auch das integrierte Update-Modul verwendet werden.
 ===================  
 ![img](https://discourse-cdn-sjc1.com/plex/uploads/default/original/3X/7/0/701551f9e411b99e20e743c017060564c55415e1.png)
 
-FlickrPeople Menü (Suchbegriff DaVinci):
-===================  
-![img](https://discourse-cdn-sjc1.com/plex/uploads/default/optimized/3X/9/5/95f8d88e5df1d201b3caa8e71d520f7c4f42f384_1_690x160.png)  
-
-FlickrPeople Menü (ausgewählt: flicoholic):
-===================  
-![img](https://discourse-cdn-sjc1.com/plex/uploads/default/optimized/3X/2/3/239fd1256b08408e22719ff9f8df32607c6eaefd_1_690x171.png)
-
-Einstellungen
-===================  
-![img](https://discourse-cdn-sjc1.com/plex/uploads/default/optimized/3X/b/c/bcec309ee562bbf3997107bf4ad3de9d6a166f43_1_536x500.png)
 
 
 
