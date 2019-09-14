@@ -1,5 +1,6 @@
 FlickrExplorer
 ==============
+#### 14.09.2019 Plex has phased out plugins in clients - so I stopped support for this plugin. If you are using Kodi you can try the Kodi port: https://github.com/rols1/Kodi-Addon-FlickrExplorer/releases
 
 Download aktuelle Version: https://github.com/rols1/FlickrExplorer/releases
 
